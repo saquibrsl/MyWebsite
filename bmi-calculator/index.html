@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BMI Calculator with History</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        /* --- Base Styles & Variables --- */
+        :root {
+            --primary-blue: #007bff; --primary-purple: #6f42c1; --secondary-grey: #6c757d;
+            --light-blue: #e7f3ff; --light-purple: #f4efff; --light-grey: #f8f9fa;
+            --text-dark: #333; --text-light: #555; --border-color: #ced4da;
+            --background-grey: #f0f2f5; --white: #ffffff;
+            --danger-bg: #f8d7da; --danger-text: #721c24; --danger-border: #f5c6cb;
+            --warning-text: #856404; --warning-bg: #fff3cd; --warning-border: #ffeeba;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--background-grey); color: var(--text-dark); line-height: 1.6;
+            display: flex; justify-content: center; align-items: flex-start;
+            min-height: 100vh; padding: 20px;
+        }
+        .container {
+            background-color: var(--white); padding: 30px 25px; border-radius: 16px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.08); width: 100%;
+            max-width: 450px; text-align: center; margin-bottom: 30px;
+        }
+        /* --- Screen Visibility --- */
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .hidden { display: none !important; }
+        /* --- Global Elements --- */
+         h1 { font-size: 1.8em; font-weight: 600; color: var(--text-dark); margin-bottom: 15px; }
+         /* h2 defined within .screen-header now */
+         p { color: var(--text-light); margin-bottom: 20px; font-size: 1em; }
+        /* Buttons */
+        button, .button-style {
+            display: inline-block; width: 100%; padding: 14px 20px; border-radius: 8px;
+            cursor: pointer; font-size: 1.05em; font-weight: 500; text-align: center;
+            border: none; transition: background-color 0.3s ease, box-shadow 0.2s ease;
+            margin-bottom: 15px;
+        }
+        .btn-blue { background-color: var(--primary-blue); color: var(--white); box-shadow: 0 2px 5px rgba(0, 123, 255, 0.3); }
+        .btn-blue:hover { background-color: #0056b3; box-shadow: 0 4px 8px rgba(0, 86, 179, 0.4); }
+        .btn-purple { background-color: var(--primary-purple); color: var(--white); box-shadow: 0 2px 5px rgba(111, 66, 193, 0.3); }
+        .btn-purple:hover { background-color: #5a32a3; box-shadow: 0 4px 8px rgba(90, 50, 163, 0.4); }
+        .btn-grey { background-color: var(--secondary-grey); color: var(--white); box-shadow: 0 2px 5px rgba(108, 117, 125, 0.2); }
+        .btn-grey:hover { background-color: #5a6268; box-shadow: 0 4px 8px rgba(90, 98, 104, 0.3); }
+        .btn-danger { background-color: var(--danger-text); color: var(--white); font-size: 0.9em; padding: 8px 15px; width: auto; margin-top: 10px; }
+        .btn-danger:hover { background-color: #a01a25; }
+        button i, .button-style i { margin-right: 8px; }
+
+        /* --- Home Screen --- */
+        #home-screen .icon-container { width: 80px; height: 80px; background-color: var(--light-blue); border-radius: 50%; display: flex; justify-content: center; align-items: center; margin: 0 auto 25px auto; color: var(--primary-blue); font-size: 2.5em; }
+        #home-screen .description { margin-bottom: 30px; font-size: 1.05em; }
+        .info-section { margin-top: 40px; text-align: left; border-top: 1px solid #eee; padding-top: 25px; }
+        .info-section h3 { font-size: 1.2em; font-weight: 600; margin-bottom: 10px; }
+        .info-section p { font-size: 0.95em; line-height: 1.7; margin-bottom: 0; }
+
+        /* --- Screen Headers (Metric, Imperial, History) --- */
+        .screen-header {
+            display: flex;
+            justify-content: space-between; /* Pushes title and button apart */
+            align-items: center; /* Vertically aligns them */
+            margin-bottom: 25px; /* Spacing below header */
+        }
+        .screen-header h2 {
+            font-size: 1.6em;
+            font-weight: 600;
+            color: var(--text-dark);
+            text-align: left;
+            margin-bottom: 0; /* Margin is now on .screen-header */
+            flex-grow: 1; /* Allow title to take space */
+            padding-right: 10px; /* Prevent title text touching button */
+        }
+        .back-button {
+            /* Removed absolute positioning */
+            background: none; border: none;
+            color: var(--text-light);
+            font-size: 0.95em;
+            cursor: pointer;
+            padding: 5px 0 5px 10px; /* Adjust padding */
+            white-space: nowrap; /* Prevent Back text wrapping */
+            flex-shrink: 0; /* Prevent button shrinking if title is very long */
+        }
+        .back-button:hover { color: var(--text-dark); }
+        .back-button i { margin-right: 4px; }
+
+
+        /* --- Calculator Screens --- */
+        .calculator-form-container { text-align: left; }
+        /* Gender Selection */
+        .gender-selection { display: flex; gap: 10px; margin-bottom: 25px; }
+        .gender-btn { flex: 1; padding: 12px; border: 1px solid var(--border-color); border-radius: 8px; background-color: var(--white); color: var(--text-dark); cursor: pointer; text-align: center; transition: border-color 0.2s ease, background-color 0.2s ease; }
+        .gender-btn:hover { border-color: #aaa; }
+        .gender-btn.active { border-color: var(--primary-blue); background-color: var(--light-blue); font-weight: 500; box-shadow: 0 0 0 2px var(--light-blue); }
+        /* Input Fields */
+        .input-group { margin-bottom: 20px; }
+        .input-group label { display: block; font-weight: 500; color: var(--text-dark); font-size: 0.95em; margin-bottom: 8px; }
+        .input-wrapper { position: relative; display: flex; }
+        .input-wrapper input[type="number"], .input-wrapper input[type="text"] {
+            width: 100%; padding: 14px 15px; padding-right: 45px;
+            border: 1px solid var(--border-color); border-radius: 8px; font-size: 1em;
+            background-color: var(--light-grey); -moz-appearance: textfield;
+        }
+         .input-wrapper input[type="text"] { padding-right: 15px; }
+         .input-wrapper input::-webkit-outer-spin-button, .input-wrapper input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+        .input-wrapper input:focus { outline: none; border-color: var(--primary-blue); box-shadow: 0 0 0 2px var(--light-blue); }
+        .unit-label-abs { position: absolute; right: 15px; top: 50%; transform: translateY(-50%); color: var(--text-light); font-size: 0.9em; pointer-events: none; }
+        .height-imperial-inputs { display: flex; gap: 15px; }
+        .height-imperial-inputs .input-group { flex: 1; margin-bottom: 0; }
+        /* --- Results & Diet Area (Keep Styles) --- */
+        .results-area, .diet-plan-area { margin-top: 30px; padding: 20px; border-radius: 12px; text-align: left; }
+        .results-area { background-color: var(--light-grey); border: 1px solid #e9ecef; }
+        .results-area h3 { text-align: center; font-size: 1.3em; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid #ddd; }
+        #bmi-value, [data-ref="bmi-value"] { font-size: 2.8em; font-weight: 700; color: var(--primary-blue); display: block; text-align: center; margin-bottom: 10px; }
+        #bmi-category-display, [data-ref="bmi-category-display"] { text-align: center; font-weight: 600; margin-bottom: 15px; font-size: 1.1em; }
+        #bmi-category-display span, [data-ref="bmi-category-display"] span { display: inline-block; padding: 4px 10px; border-radius: 15px; font-size: 0.9em; margin-left: 0; }
+        .category-vsu, .category-underweight { background-color: #add8e6; color: #000; } .category-su { background-color: #87ceeb; color: #000; } .category-u { background-color: #6495ed; color: #fff; } .category-n, .category-healthy { background-color: #90ee90; color: #000; } .category-o, .category-overweight { background-color: #fffacd; color: #000; } .category-ob1, .category-obese { background-color: #ffa07a; color: #000; } .category-ob2 { background-color: #f08080; color: #fff; } .category-ob3 { background-color: #dc143c; color: #fff; }
+        #weight-difference, [data-ref="weight-difference"], #normal-range, [data-ref="normal-range"] { font-size: 0.95em; text-align: center; color: var(--text-light); }
+        #normal-range, [data-ref="normal-range"] { margin-bottom: 0; }
+        .results-area .info-message { font-style: normal; color: var(--text-dark); background-color: var(--light-blue); padding: 15px; border-radius: 8px; border: 1px solid var(--primary-blue); margin-bottom: 20px; text-align: center; font-size: 0.95em; }
+        .diet-plan-area { background-color: var(--light-blue); border: 1px solid #bce0ff; }
+        .diet-plan-area h4 { color: var(--primary-blue); text-align: center; font-size: 1.25em; }
+        .diet-plan-area .disclaimer { font-size: 0.8em; text-align: center; padding-top: 15px; margin-top: 15px; border-top: 1px dashed #aaa; }
+        .diet-plan-area .plan-content { background-color: var(--white); padding: 15px; border-radius: 8px; font-size: 0.9em; }
+        /* Error Message */
+        .error-message { color: var(--danger-text); background-color: var(--danger-bg); border: 1px solid var(--danger-border); border-radius: 8px; padding: 12px 15px; font-size: 0.95em; margin-top: 20px; text-align: left; }
+        /* --- History Screen --- */
+         /* #history-screen h2 defined by .screen-header h2 now */
+         #history-list { list-style: none; padding: 0; margin: 0 0 20px 0; max-height: 400px; overflow-y: auto; }
+         #history-list li { background-color: var(--light-grey); border: 1px solid #eee; border-radius: 8px; padding: 15px; margin-bottom: 10px; font-size: 0.9em; }
+         #history-list li .history-details { display: flex; flex-wrap: wrap; gap: 5px 15px; margin-bottom: 8px; }
+         #history-list li .history-details span { display: block; }
+         #history-list li .detail-item { font-weight: 500; color: var(--text-dark); }
+         #history-list li .detail-value { color: var(--text-light); }
+         #history-list li .history-date { font-size: 0.8em; color: #888; text-align: right; margin-top: 5px; display: block; }
+         #no-history-message { text-align: center; color: var(--text-light); padding: 20px; background-color: var(--light-grey); border-radius: 8px; }
+         .history-actions { text-align: center; }
+
+    </style>
+</head>
+<body>
+    <div class="container">
+
+        <!-- Screen 1: Home -->
+        <div id="home-screen" class="screen active">
+            <div class="icon-container"><i class="fas fa-calculator"></i></div>
+            <h1>BMI Calculator</h1>
+            <p class="description">Calculate your Body Mass Index and track your progress.</p>
+            <button id="metric-btn" class="button-style btn-blue"><i class="fas fa-ruler-combined"></i> Metric (kg & ft/in)</button>
+            <button id="imperial-btn" class="button-style btn-purple"><i class="fas fa-weight-scale"></i> Imperial (lbs & cm)</button>
+            <button id="history-btn" class="button-style btn-grey"><i class="fas fa-history"></i> View History</button>
+            <div class="info-section">
+                <h3>What is BMI?</h3>
+                <p>Body Mass Index (BMI) is a value derived from your weight and height...</p>
+            </div>
+        </div>
+
+        <!-- Screen 2: Metric Calculator -->
+        <div id="metric-calculator-screen" class="screen">
+             <!-- ** Updated Header Structure ** -->
+             <div class="screen-header">
+                 <h2>Metric BMI</h2>
+                 <button class="back-button" data-target="home-screen"><i class="fas fa-arrow-left"></i> Back</button>
+             </div>
+             <!-- ** End Updated Header Structure ** -->
+            <div class="calculator-form-container">
+                 <div class="input-group"><label for="name-input-metric">Name</label><div class="input-wrapper"><input type="text" id="name-input-metric" placeholder="Enter name for history" required></div></div>
+                 <div class="input-group"><label>Gender</label><div class="gender-selection"><button class="gender-btn active" data-value="male"><i class="fas fa-mars"></i> Male</button><button class="gender-btn" data-value="female"><i class="fas fa-venus"></i> Female</button></div></div>
+                 <div class="input-group"><label for="age-input-metric">Age</label><div class="input-wrapper"><input type="number" id="age-input-metric" placeholder="e.g., 30" min="0" max="120" step="1" aria-label="Age in years"></div></div>
+                 <div class="input-group"><label for="weight-kg">Weight (kg)</label><div class="input-wrapper"><input type="number" id="weight-kg" placeholder="e.g., 80" min="0" step="any"><span class="unit-label-abs">kg</span></div></div>
+                 <div class="input-group"><label>Height (feet & inches)</label><div class="height-imperial-inputs"><div class="input-group"><div class="input-wrapper"><input type="number" id="height-ft" placeholder="e.g., 5" min="0" step="any" aria-label="Height in feet"><span class="unit-label-abs">ft</span></div></div><div class="input-group"><div class="input-wrapper"><input type="number" id="height-in" placeholder="e.g., 9" min="0" max="11.99" step="any" aria-label="Height in inches"><span class="unit-label-abs">in</span></div></div></div></div>
+                 <div class="error-message hidden" id="error-metric"></div>
+                 <button id="calculate-metric-btn" class="button-style btn-blue">Calculate & Save BMI</button>
+                 <div id="results-metric"></div><div id="diet-metric"></div>
+             </div>
+        </div>
+
+        <!-- Screen 3: Imperial Calculator -->
+        <div id="imperial-calculator-screen" class="screen">
+             <!-- ** Updated Header Structure ** -->
+             <div class="screen-header">
+                <h2>Imperial BMI</h2>
+                <button class="back-button" data-target="home-screen"><i class="fas fa-arrow-left"></i> Back</button>
+             </div>
+             <!-- ** End Updated Header Structure ** -->
+             <div class="calculator-form-container">
+                 <div class="input-group"><label for="name-input-imperial">Name</label><div class="input-wrapper"><input type="text" id="name-input-imperial" placeholder="Enter name for history" required></div></div>
+                 <div class="input-group"><label>Gender</label><div class="gender-selection"><button class="gender-btn active" data-value="male"><i class="fas fa-mars"></i> Male</button><button class="gender-btn" data-value="female"><i class="fas fa-venus"></i> Female</button></div></div>
+                 <div class="input-group"><label for="age-input-imperial">Age</label><div class="input-wrapper"><input type="number" id="age-input-imperial" placeholder="e.g., 30" min="0" max="120" step="1" aria-label="Age in years"></div></div>
+                 <div class="input-group"><label for="weight-lbs">Weight (lbs)</label><div class="input-wrapper"><input type="number" id="weight-lbs" placeholder="e.g., 150" min="0" step="any"><span class="unit-label-abs">lbs</span></div></div>
+                 <div class="input-group"><label for="height-cm">Height (cm)</label><div class="input-wrapper"><input type="number" id="height-cm" placeholder="e.g., 175" min="0" step="any"><span class="unit-label-abs">cm</span></div></div>
+                 <div class="error-message hidden" id="error-imperial"></div>
+                 <button id="calculate-imperial-btn" class="button-style btn-purple">Calculate & Save BMI</button>
+                 <div id="results-imperial"></div><div id="diet-imperial"></div>
+             </div>
+        </div>
+
+         <!-- Screen 4: History -->
+        <div id="history-screen" class="screen">
+            <!-- ** Updated Header Structure ** -->
+             <div class="screen-header">
+                 <h2>Calculation History</h2>
+                 <button class="back-button" data-target="home-screen"><i class="fas fa-arrow-left"></i> Back</button>
+             </div>
+            <!-- ** End Updated Header Structure ** -->
+            <ul id="history-list"></ul>
+            <p id="no-history-message" class="hidden">No history recorded yet.</p>
+            <div class="history-actions">
+                <button id="clear-history-btn" class="btn-danger"><i class="fas fa-trash-alt"></i> Clear History</button>
+            </div>
+        </div>
+
+
+         <!-- Reusable Templates -->
+         <template id="results-template">
+            <div class="results-area">
+                <h3>Your Information</h3>
+                <p class="info-message hidden" data-ref="age-info-message"></p>
+                <div data-ref="standard-bmi-display">
+                    <span data-ref="bmi-value">--</span>
+                    <p data-ref="bmi-category-display">Category: <span>--</span></p>
+                    <p data-ref="weight-difference">Difference: --</p>
+                    <p data-ref="normal-range">Normal Weight Range: --</p>
+                 </div>
+            </div>
+         </template>
+<template id="diet-template">
+              <div class="diet-plan-area">
+                 <h4 data-ref="diet-plan-title">Suggestions & Information</h4>
+                 <p class="disclaimer">
+                     <strong>Disclaimer:</strong> This tool provides general information based on standard BMI categories or age-group considerations. It is NOT a substitute for professional medical or nutritional advice. Consult a doctor, registered dietitian, or pediatrician for personalized assessment and guidance, especially for children, adolescents, the elderly, or individuals with health conditions. BMI percentiles are required for accurate assessment in ages 2-19.
+                 </p>
+                 <div data-ref="diet-plan-content" class="plan-content"></div>
+             </div>
+         </template>
+
+    </div> <!-- End Container -->
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- Elements (Keep as before) ---
+            const screens = document.querySelectorAll('.screen');
+            const metricBtn = document.getElementById('metric-btn');
+            const imperialBtn = document.getElementById('imperial-btn');
+            const historyBtn = document.getElementById('history-btn');
+            const backButtons = document.querySelectorAll('.back-button');
+            const calculateMetricBtn = document.getElementById('calculate-metric-btn');
+            const calculateImperialBtn = document.getElementById('calculate-imperial-btn');
+            const clearHistoryBtn = document.getElementById('clear-history-btn');
+            const historyList = document.getElementById('history-list');
+            const noHistoryMessage = document.getElementById('no-history-message');
+            const resultsTemplate = document.getElementById('results-template');
+            const dietTemplate = document.getElementById('diet-template');
+            const metricScreen = document.getElementById('metric-calculator-screen');
+            const imperialScreen = document.getElementById('imperial-calculator-screen');
+
+            // --- State & Constants (Keep as before) ---
+            let currentCalculatorType = null;
+            const BMI_HISTORY_KEY = 'bmiCalculatorHistory';
+             const MIN_ADULT_NORMAL_BMI = 18.5; const MAX_ADULT_NORMAL_BMI = 24.9; const MIN_ELDERLY_HEALTHY_BMI = 23; const MAX_ELDERLY_HEALTHY_BMI = 27; const ELDERLY_OVERWEIGHT_BMI = 30; const INCHES_TO_METERS = 0.0254; const FEET_TO_INCHES = 12; const CM_TO_METERS = 0.01; const LB_TO_KG = 0.453592; const KG_TO_LB = 2.20462;
+             const ADULT_BMI_CATEGORIES = { UNDERWEIGHT: { text: "Underweight", id: "cat-list-underweight", className: "category-underweight" }, NORMAL:      { text: "Normal weight", id: "cat-list-normal", className: "category-normal" }, OVERWEIGHT:  { text: "Overweight", id: "cat-list-overweight", className: "category-overweight" }, OBESE1:      { text: "Obese Class I", id: "cat-list-obese1", className: "category-obese" }, OBESE2:      { text: "Obese Class II", id: "cat-list-obese2", className: "category-obese" }, OBESE3:      { text: "Obese Class III", id: "cat-list-obese3", className: "category-obese" }, };
+             const ELDERLY_BMI_CATEGORIES = { UNDERWEIGHT: { text: "Underweight", id: "cat-list-underweight", className: "category-underweight" }, HEALTHY:     { text: "Healthy range (Elderly)", id: "cat-list-normal", className: "category-healthy" }, OVERWEIGHT:  { text: "Overweight (Elderly)", id: "cat-list-overweight", className: "category-overweight" }, OBESE:       { text: "Obese (Elderly)", id: "cat-list-obese1", className: "category-obese" }, };
+             const SUGGESTION_PLANS = { infant: { title: "Infants & Toddlers (Under 2 Years)", plan: "BMI is not typically used..." }, child_adolescent: { title: "Children & Adolescents (2-19 Years)", plan: "For ages 2-19, BMI is calculated..." }, adult_underweight: { title: "Sample Weight Gain Plan...", plan: "[Full Plan Text]" }, adult_normal: { title: "Maintaining a Healthy Weight...", plan: "[Full Plan Text]" }, adult_overweight: { title: "Healthy Habits for Weight Management...", plan: "[Full Plan Text]" }, adult_obese: { title: "Sample Weight Management Plan...", plan: "[Full Plan Text]" }, elderly_general: { title: "Healthy Aging Considerations...", plan: "[Full Plan Text]" } }; // Ensure full plan text is included
+             const fullDisclaimer = `This tool provides general information... [Full disclaimer text] ... Consult a professional.`; // Ensure full disclaimer text
+
+            // --- Event Listeners ---
+            // ** Restore Metric/Imperial Button Listeners **
+            metricBtn.addEventListener('click', () => showCalculator('metric'));
+            imperialBtn.addEventListener('click', () => showCalculator('imperial'));
+            // ** End Restore **
+            historyBtn.addEventListener('click', showHistoryScreen);
+            backButtons.forEach(btn => btn.addEventListener('click', () => showScreen(btn.dataset.target || 'home-screen')));
+            document.querySelectorAll('.gender-selection').forEach(container => { container.addEventListener('click', (e) => { if (e.target.classList.contains('gender-btn')) { const buttons = container.querySelectorAll('.gender-btn'); buttons.forEach(btn => btn.classList.remove('active')); e.target.classList.add('active'); } }); });
+            calculateMetricBtn.addEventListener('click', () => handleCalculation('metric'));
+            calculateImperialBtn.addEventListener('click', () => handleCalculation('imperial'));
+            clearHistoryBtn.addEventListener('click', clearHistory);
+            metricScreen.querySelectorAll('input').forEach(input => input.addEventListener('input', () => clearError('metric')));
+            imperialScreen.querySelectorAll('input').forEach(input => input.addEventListener('input', () => clearError('imperial')));
+            metricScreen.querySelectorAll('.gender-btn').forEach(input => input.addEventListener('click', () => clearError('metric')));
+            imperialScreen.querySelectorAll('.gender-btn').forEach(input => input.addEventListener('click', () => clearError('imperial')));
+
+            // --- All Functions (Keep as in the previous version with History) ---
+            // loadHistory, saveHistory, showHistoryScreen, displayHistory, clearHistory
+            // showScreen, showCalculator, resetForm
+            // handleCalculation, getParsedInputs, validateInputs
+            // convertHeightToMeters, convertWeightToKg, calculateBMI,
+            // calculateMinNormalWeightKg, calculateMaxNormalWeightKg, calculateWeightDifferenceKg
+            // classifyAdultBMI, classifyElderlyBMI
+            // displayAgeSpecificMessage, updateStandardResultsUI, displaySuggestionPlan
+            // showError, clearError
+
+            // --- Ensure all function definitions from the previous version are included below ---
+            function loadHistory() { const h = localStorage.getItem(BMI_HISTORY_KEY); try { return h ? JSON.parse(h) : []; } catch (e) { console.error(e); return []; } }
+            function saveHistory(arr) { try { localStorage.setItem(BMI_HISTORY_KEY, JSON.stringify(arr)); } catch (e) { console.error(e); showError("Could not save history.", currentCalculatorType || 'metric'); } }
+            function showHistoryScreen() { displayHistory(); showScreen('history-screen'); }
+            function displayHistory() { const h = loadHistory(); historyList.innerHTML = ''; if (h.length === 0) { noHistoryMessage.classList.remove('hidden'); clearHistoryBtn.classList.add('hidden'); } else { noHistoryMessage.classList.add('hidden'); clearHistoryBtn.classList.remove('hidden'); h.sort((a, b) => new Date(b.date) - new Date(a.date)); h.forEach(e => { const li = document.createElement('li'); const dt = new Date(e.date).toLocaleString(undefined, { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' }); li.innerHTML = `<div class="history-details"><span><span class="detail-item">Name:</span> <span class="detail-value">${e.name || 'N/A'}</span></span> <span><span class="detail-item">Age:</span> <span class="detail-value">${e.age}</span></span> <span><span class="detail-item">Sex:</span> <span class="detail-value">${e.sex}</span></span> <span><span class="detail-item">BMI:</span> <span class="detail-value">${e.bmi.toFixed(1)}</span></span> <span><span class="detail-item">Category:</span> <span class="detail-value">${e.category || 'N/A'}</span></span> </div><span class="history-date">${dt}</span>`; historyList.appendChild(li); }); } }
+            function clearHistory() { if (confirm('Delete all history?')) { localStorage.removeItem(BMI_HISTORY_KEY); displayHistory(); } }
+            function showScreen(id) { screens.forEach(s => s.classList.toggle('active', s.id === id)); if (id === 'home-screen') { resetForm('metric'); resetForm('imperial'); currentCalculatorType = null; } }
+            function showCalculator(type) { currentCalculatorType = type; if (type === 'metric') { resetForm('imperial'); showScreen('metric-calculator-screen'); } else { resetForm('metric'); showScreen('imperial-calculator-screen'); } }
+            function resetForm(type) { const s = document.getElementById(`${type}-calculator-screen`); if (!s) return; s.querySelectorAll('input[type="number"], input[type="text"]').forEach(i => i.value = ''); s.querySelectorAll('.gender-btn').forEach(b => b.classList.toggle('active', b.dataset.value === 'male')); clearError(type); document.getElementById(`results-${type}`).innerHTML = ''; document.getElementById(`diet-${type}`).innerHTML = ''; }
+            function handleCalculation(type) { clearError(type); const rc = document.getElementById(`results-${type}`); const dc = document.getElementById(`diet-${type}`); rc.innerHTML = ''; dc.innerHTML = ''; const { name, age, sex, heightValue, weightValue, heightUnit, weightUnit, screenElement } = getParsedInputs(type); const ve = validateInputs(name, age, heightValue, weightValue, heightUnit); if (ve) { showError(ve, type); return; } if (age < 2) { displayAgeSpecificMessage(SUGGESTION_PLANS.infant, null, type); } else { const hm = convertHeightToMeters(heightValue, heightUnit); const wk = convertWeightToKg(weightValue, weightUnit); if (hm <= 0 || wk <= 0) { showError("Height/Weight must be positive.", type); return; } const bmi = calculateBMI(wk, hm); if (!isFinite(bmi) || bmi <= 0) { showError("Cannot calculate BMI.", type); return; } const rn = resultsTemplate.content.cloneNode(true).firstElementChild; const dn = dietTemplate.content.cloneNode(true).firstElementChild; rn.querySelector('[data-ref="bmi-value"]').textContent = bmi.toFixed(1); let ci = null; if (age < 20) { displayAgeSpecificMessage(SUGGESTION_PLANS.child_adolescent, bmi, type); } else { let minKg, maxKg, diffKg; if (age < 65) { ci = classifyAdultBMI(bmi); minKg = calculateMinNormalWeightKg(hm, MIN_ADULT_NORMAL_BMI); maxKg = calculateMaxNormalWeightKg(hm, MAX_ADULT_NORMAL_BMI); } else { ci = classifyElderlyBMI(bmi); minKg = calculateMinNormalWeightKg(hm, MIN_ELDERLY_HEALTHY_BMI); maxKg = calculateMaxNormalWeightKg(hm, MAX_ELDERLY_HEALTHY_BMI); } diffKg = calculateWeightDifferenceKg(wk, minKg, maxKg); updateStandardResultsUI(rn, ci, diffKg, minKg, maxKg, weightUnit); displaySuggestionPlan(dn, age, ci.key); rc.appendChild(rn); dc.appendChild(dn); } if (ci || age < 20) { const h = loadHistory(); h.push({ name: name, age: age, sex: sex, bmi: bmi, category: ci ? ci.text : 'N/A (Use Percentiles)', date: new Date().toISOString() }); saveHistory(h); } } }
+            function getParsedInputs(type) { const s = document.getElementById(`${type}-calculator-screen`); const name = s.querySelector('input[type="text"][id^="name-input"]').value.trim(); const age = parseInt(s.querySelector('input[type="number"][id^="age-input"]').value, 10); const sex = s.querySelector('.gender-btn.active')?.dataset.value || null; let hv, wv, hu, wu; if (type === 'metric') { hv = { ft: parseFloat(s.querySelector('#height-ft').value), in: parseFloat(s.querySelector('#height-in').value) }; wv = parseFloat(s.querySelector('#weight-kg').value); hu = 'imperial_ft_in'; wu = 'metric'; } else { hv = parseFloat(s.querySelector('#height-cm').value); wv = parseFloat(s.querySelector('#weight-lbs').value); hu = 'metric_cm'; wu = 'imperial'; } return { name, age, sex, heightValue: hv, weightValue: wv, heightUnit: hu, weightUnit: wu, screenElement: s }; }
+            function validateInputs(name, age, hv, wv, hu) { if (!name) { return "Please enter your name to save calculation."; } if (isNaN(age) || age < 0 || age > 120) return "Please enter a valid age (0-120 years)."; if (isNaN(wv) || wv <= 0) return "Weight must be positive."; if (hu === 'imperial_ft_in') { const ft = hv.ft; const inch = hv.in; if (isNaN(ft) && isNaN(inch)) return "Please enter height (feet and/or inches)."; const ftV = isNaN(ft) || ft < 0 ? 0 : ft; const inV = isNaN(inch) || inch < 0 ? 0 : inch; if (ft < 0 || inch < 0) return "Height cannot be negative."; if (inch >= 12) return "Inches < 12."; if (ftV === 0 && inV === 0) return "Height > 0."; } else if (hu === 'metric_cm') { const cm = hv; if (isNaN(cm)) return "Enter height in cm."; if (cm <= 0) return "Height > 0."; } else { return "Invalid height unit."; } return null; }
+            function convertHeightToMeters(hVal, hUnitId) { if (hUnitId === 'imperial_ft_in') { const ft = isNaN(hVal.ft)?0:hVal.ft; const inches = isNaN(hVal.in)?0:hVal.in; return ((ft * FEET_TO_INCHES) + inches) * INCHES_TO_METERS; } else if (hUnitId === 'metric_cm'){ return (isNaN(hVal)?0:hVal) * CM_TO_METERS; } return 0; }
+            function convertWeightToKg(wVal, wUnitId) { return (wUnitId === 'imperial') ? (isNaN(wVal)?0:wVal) * LB_TO_KG : (isNaN(wVal)?0:wVal); }
+            function calculateBMI(wKg, hM) { return (hM <= 0) ? NaN : wKg / (hM * hM); }
+            function calculateMinNormalWeightKg(hM, minBMI) { return minBMI * (hM * hM); }
+            function calculateMaxNormalWeightKg(hM, maxBMI) { return maxBMI * (hM * hM); }
+            function calculateWeightDifferenceKg(currWKg, minKg, maxKg) { if (currWKg < minKg) return currWKg - minKg; if (currWKg > maxKg) return currWKg - maxKg; return 0; }
+            function classifyAdultBMI(bmi) { if (bmi < 18.5) return {...ADULT_BMI_CATEGORIES.UNDERWEIGHT, key: 'underweight'}; if (bmi < 25.0) return {...ADULT_BMI_CATEGORIES.NORMAL, key: 'normal'}; if (bmi < 30.0) return {...ADULT_BMI_CATEGORIES.OVERWEIGHT, key: 'overweight'}; if (bmi < 35.0) return {...ADULT_BMI_CATEGORIES.OBESE1, key: 'obese'}; if (bmi < 40.0) return {...ADULT_BMI_CATEGORIES.OBESE2, key: 'obese'}; return {...ADULT_BMI_CATEGORIES.OBESE3, key: 'obese'}; }
+            function classifyElderlyBMI(bmi) { if (bmi < MIN_ELDERLY_HEALTHY_BMI) return {...ELDERLY_BMI_CATEGORIES.UNDERWEIGHT, key: 'underweight'}; if (bmi <= MAX_ELDERLY_HEALTHY_BMI) return {...ELDERLY_BMI_CATEGORIES.HEALTHY, key: 'healthy'}; if (bmi <= ELDERLY_OVERWEIGHT_BMI) return {...ELDERLY_BMI_CATEGORIES.OVERWEIGHT, key: 'overweight'}; return {...ELDERLY_BMI_CATEGORIES.OBESE, key: 'obese'}; }
+            function displayAgeSpecificMessage(pd, bmi, type) { const rc = document.getElementById(`results-${type}`); const dc = document.getElementById(`diet-${type}`); rc.innerHTML = ''; dc.innerHTML = ''; const rn = resultsTemplate.content.cloneNode(true).firstElementChild; const dn = dietTemplate.content.cloneNode(true).firstElementChild; const aie = rn.querySelector('[data-ref="age-info-message"]'); const sde = rn.querySelector('[data-ref="standard-bmi-display"]'); const bve = rn.querySelector('[data-ref="bmi-value"]'); aie.innerHTML = pd.plan.replace(/\n/g, '<br>'); aie.classList.remove('hidden'); sde.classList.add('hidden'); if (bmi !== null) { bve.textContent = bmi.toFixed(1); sde.classList.remove('hidden'); rn.querySelector('[data-ref="bmi-category-display"]').classList.add('hidden'); rn.querySelector('[data-ref="weight-difference"]').classList.add('hidden'); rn.querySelector('[data-ref="normal-range"]').classList.add('hidden'); } const dte = dn.querySelector('[data-ref="diet-plan-title"]'); const dce = dn.querySelector('[data-ref="diet-plan-content"]'); dte.textContent = pd.title; dce.innerHTML = pd.plan.replace(/\n/g, '<br>'); dn.querySelector('.disclaimer').textContent = fullDisclaimer; rc.appendChild(rn); dc.appendChild(dn); }
+            function updateStandardResultsUI(rn, ci, diffKg, minKg, maxKg, wu) { const aie = rn.querySelector('[data-ref="age-info-message"]'); const sde = rn.querySelector('[data-ref="standard-bmi-display"]'); const bcs = rn.querySelector('[data-ref="bmi-category-display"] span'); const wde = rn.querySelector('[data-ref="weight-difference"]'); const nre = rn.querySelector('[data-ref="normal-range"]'); bcs.textContent = ci.text; bcs.className = ''; bcs.classList.add(ci.className); const iI = (wu === 'imperial'); const f = iI ? KG_TO_LB : 1; const u = iI ? "lb" : "kg"; const minD = minKg * f; const maxD = maxKg * f; const diffD = Math.abs(diffKg) * f; let diffM; if (diffKg < 0) diffM = `Gain ${diffD.toFixed(1)}\u00A0${u} to reach healthy range.`; else if (diffKg > 0) diffM = `Lose ${diffD.toFixed(1)}\u00A0${u} to reach healthy range.`; else diffM = "Within healthy range."; wde.textContent = `Difference: ${diffM}`; nre.textContent = `Healthy Range: ${minD.toFixed(1)}\u00A0${u} - ${maxD.toFixed(1)}\u00A0${u}`; aie.classList.add('hidden'); sde.classList.remove('hidden'); rn.querySelector('[data-ref="bmi-value"]').classList.remove('hidden'); rn.querySelector('[data-ref="bmi-category-display"]').classList.remove('hidden'); rn.querySelector('[data-ref="weight-difference"]').classList.remove('hidden'); rn.querySelector('[data-ref="normal-range"]').classList.remove('hidden'); }
+            function displaySuggestionPlan(dn, age, key) { const dte = dn.querySelector('[data-ref="diet-plan-title"]'); const dce = dn.querySelector('[data-ref="diet-plan-content"]'); let pd = null; if (age >= 65) pd = SUGGESTION_PLANS.elderly_general; else if (age >= 20) { switch (key) { case 'underweight': pd = SUGGESTION_PLANS.adult_underweight; break; case 'normal': case 'healthy': pd = SUGGESTION_PLANS.adult_normal; break; case 'overweight': pd = SUGGESTION_PLANS.adult_overweight; break; case 'obese': pd = SUGGESTION_PLANS.adult_obese; break; } } if (pd) { dte.textContent = pd.title; dce.innerHTML = pd.plan.replace(/\n/g, '<br>'); dn.querySelector('.disclaimer').textContent = fullDisclaimer; } }
+            function showError(msg, type) { const ec = document.getElementById(`error-${type}`); if(ec) { ec.textContent = msg; ec.classList.remove('hidden'); } document.getElementById(`results-${type}`).innerHTML = ''; document.getElementById(`diet-${type}`).innerHTML = ''; }
+            function clearError(type) { const ec = document.getElementById(`error-${type}`); if(ec) { ec.textContent = ''; ec.classList.add('hidden'); } }
+
+        }); // End DOMContentLoaded
+    </script>
+
+</body>
+</html>
