@@ -4,15 +4,109 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Portfolio</title>
+    <style>
+        body {
+            background-color: #1a1a1a;
+            color: #ffffff;
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+        }
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        .intro {
+            font-size: 1.2em;
+            color: #cccccc;
+            margin-bottom: 20px;
+        }
+        .project-container {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 20px;
+        }
+        .project-card {
+            background-color: #2a2a2a;
+            border-radius: 10px;
+            padding: 20px;
+            width: 250px;
+            text-align: center;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+        }
+        .project-card img {
+            width: 50px;
+            height: 50px;
+            margin-bottom: 10px;
+        }
+        .project-card h2 {
+            font-size: 1.5em;
+            margin: 10px 0;
+        }
+        .project-card p {
+            font-size: 0.9em;
+            color: #cccccc;
+            margin: 10px 0;
+        }
+        .visit-button {
+            background-color: #28a745;
+            color: #ffffff;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 20px;
+            font-size: 1em;
+            cursor: pointer;
+            text-decoration: none;
+            display: inline-block;
+            transition: background-color 0.3s, transform 0.3s ease;
+        }
+        .visit-button:hover {
+            background-color: #218838;
+            transform: scale(1.1);
+        }
+        footer {
+            margin-top: 40px;
+            font-size: 0.8em;
+            color: #cccccc;
+        }
+        @media (max-width: 600px) {
+            .project-card {
+                width: 100%;
+                max-width: 300px;
+            }
+        }
+    </style>
 </head>
 <body>
     <h1>Welcome to My Portfolio</h1>
-    <p>Check out my projects below!</p>
-    <ul>
-        <li><a href="https://saquibrsl.github.io/MyProjects/">My Games</a></li>
-        <li><a href="https://saquibrsl.github.io/MyWebsite/AiAutomotion/">Ai website</a></li>
-        <li><a href="https://saquibrsl.github.io/HealthApps/bmi-calculator/">Health Apps</a></li>
-    </ul>
+    <p class="intro">Check out my projects below!</p>
+    <div class="project-container">
+        <!-- My Games -->
+        <div class="project-card">
+            <img src="https://img.icons8.com/ios-filled/50/ffffff/game-controller.png" alt="Games Icon">
+            <h2>My Games</h2>
+            <p>Play a variety of fun web-based games!</p>
+            <a href="https://saquibrs1.github.io/MyProjects/" class="visit-button">Visit</a>
+        </div>
+        <!-- AI Website -->
+        <div class="project-card">
+            <img src="https://img.icons8.com/ios-filled/50/ffffff/artificial-intelligence.png" alt="AI Icon">
+            <h2>AI Website</h2>
+            <p>Explore automated AI tools!</p>
+            <a href="https://saquibrs1.github.io/MyWebsite/AI_Automation/" class="visit-button">Visit</a>
+        </div>
+        <!-- Health Apps -->
+        <div class="project-card">
+            <img src="https://img.icons8.com/ios-filled/50/ffffff/health-data.png" alt="Health Icon">
+            <h2>Health Apps</h2>
+            <p>Utility apps for health and wellness!</p>
+            <a href="https://saquibrs1.github.io/HealthApps/" class="visit-button">Visit</a>
+        </div>
+    </div>
+    <footer>
+        © 2025 saquibrsl. All rights reserved.
+    </footer>
 </body>
 </html>
-
